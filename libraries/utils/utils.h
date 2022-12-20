@@ -1,6 +1,8 @@
 #ifndef _UTILS_H
 #define _UTILS_H
 
+#include <Keyboard.h>
+
 #define SLAVE_ADDR 4  // random slave address
 #define BYTE_SIZE 8	  // 8 bits in a byte
 
@@ -15,8 +17,8 @@
 #define MACRO_4 0xa4
 #define KEY_PRINT_SCREEN 0xCE
 
-#define KEY_LEFT_SPACE ' '
-#define KEY_RIGHT_SPACE ' '
+#define KEY_LEFT_SPACE 'l '
+#define KEY_RIGHT_SPACE 'r '
 
 namespace PCB {
     const int numMultiplexors = 3;
@@ -72,7 +74,7 @@ namespace PCB {
 // helper functions
 
 // read sensor values from all three multiplexors for the given pin
-void readFromMultiplexors(int* sensorValues, byte pin) {
+inline void readFromMultiplexors(int* sensorValues, byte pin) {
   for (byte i = 0; i < PCB::numSelectorPins; i++) {
     const bool state = bitRead(pin, i);
     digitalWrite(PCB::multiplexorSelectorPins[i], state);

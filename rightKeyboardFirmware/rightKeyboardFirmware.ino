@@ -1,8 +1,9 @@
-#include <Keyboard.h>
+// #include <Keyboard.h>
 #include <PololuLedStrip.h>
 #include <Wire.h>
 
 #include "config.h"
+#include "smallKeyboard.hpp"
 #include "utils.h"
 
 PololuLedStrip<11> LED0;
@@ -12,11 +13,14 @@ PololuLedStrip<6> LED3;
 PololuLedStrip<5> LED4;
 PololuLedStrip<13> LED5;
 
+// Keyboard wrapper that maintains state
+SmallKeyboard smallKeyboard;
+
 void setup() {
   for (byte i = 0; i < PCB::numSelectorPins; i++) {
     pinMode(PCB::multiplexorSelectorPins[i], OUTPUT);
   }
-//  Keyboard.begin();
+  smallKeyboard.begin();
   Wire.begin();
   Wire.setClock(400000);
 
@@ -27,20 +31,20 @@ void setup() {
   Serial.begin(9600);
 }
 
-//void setKeyByCondition(int key, bool pressed) {
-//  if (pressed) {
-//    Keyboard.press(key);
-//  } else {
-//    Keyboard.release(key);
-//  }
-//}
+void setKeyByCondition(String side, byte pin, byte multiplexorIdx, bool pressed) {
+  if (pressed) {
+    smallKeyboard.press(side, pin, multiplexorIdx);
+  } else {
+    smallKeyboard.release(side, pin, multiplexorIdx);
+  }
+}
 
 void processRightKeyboard() {
- for (byte pin = 0; pin < PCB::numMultiplexorReadPins; pin++) {
+  for (byte pin = 0; pin < PCB::numMultiplexorReadPins; pin++) {
     int sensorValues[PCB::numMultiplexors];
     readFromMultiplexors(sensorValues, pin);
     for (byte i = 0; i < PCB::numMultiplexors; i++) {
-      const char key = PCB::rightMultiplexorPin2Char[pin][i];
+      const int key = PCB::rightMultiplexorPin2Char[pin][i];
       const int keyValue = sensorValues[i];
 
       // check if key is pressed
@@ -53,21 +57,47 @@ void processRightKeyboard() {
       }
       const int keyThreshold = unpressedValue + keyPressRange * KEY_THRESHOLD_PERCENTAGE;
       const bool keyPressed = ((keyPressRange > 0 && keyValue > keyThreshold) || (keyPressRange < 0 && keyValue < keyThreshold));
+      setKeyByCondition("right", pin, i, keyPressed);
+    }
+  }
+}
 
-      if (keyPressed) {
-        Serial.println(String(key) + " pressed!");
+void processLeftKeyboard() {
+  bool receivedData = true;
+  Wire.requestFrom(SLAVE_ADDR, PCB::i2cByteArraySize + 1);
+  // check the first byte to see i2c did send valid data
+  char validByte = Wire.read();
+  if (validByte == -1) {
+    receivedData = false;
+  }
+  if (!receivedData) {
+    return;
+  }
+
+  for (byte i = 0; i <PCB::i2cByteArraySize; i++) {
+    const byte dataByte = Wire.read();
+    // skip over any extra unpopulated bytes at the end
+    if (dataByte == -1) {
+      continue;
+    }
+
+    for (byte bitIndex = 0; bitIndex < BYTE_SIZE; bitIndex++) {
+      const byte globalBitIndex = i * BYTE_SIZE + bitIndex;
+      const int pin = globalBitIndex / PCB::numMultiplexors;
+      const int multiplexorIdx = globalBitIndex % PCB::numMultiplexors;
+      const int key = PCB::leftMultiplexorPin2Char[pin][multiplexorIdx];
+      if (key == KEY_EMPTY) {
+        continue;
       }
-      // if (pin == 15 && i == 0 && sensorValues[i] < 470){
-      //   colors[1] = {255, 0, 0};
-      //   Serial.println("down");
-      // }
-      //   if (pin == 14 && i == 0 && sensorValues[i] > 544){
-      //   colors[0] = {255, 0, 0};
-      //   Serial.println("right");
-      // }
-
-
-//      setKeyByCondition(key, keyPressed);
+      const bool keyPressed = bitRead(dataByte, bitIndex);
+      if (key == MACRO_0) {
+        if (keyPressed){
+          smallKeyboard.setDebug(false);
+        } else {
+          smallKeyboard.setDebug(true);
+        }
+      }
+      setKeyByCondition("left", pin, multiplexorIdx, keyPressed);
     }
   }
 }
@@ -77,40 +107,11 @@ void loop() {
   for(int i = 0; i < 3; i++) {
     colors[i] = {0,0,0};
   }
-  
+
   // process right side of keyboard
   processRightKeyboard();
-
   // process left side of keyboard
-  bool receivedData = true;
-  Wire.requestFrom(SLAVE_ADDR, PCB::i2cByteArraySize + 1);
-  char validByte = Wire.read();
-  if (validByte == -1) {
-    receivedData = false;
-  }
-  if (receivedData) {
-    for (byte i = 0; i <PCB::i2cByteArraySize; i++) {
-      const byte dataByte = Wire.read();
-      if (dataByte == -1) {
-        continue;
-      }
-      
-      for (byte bitIndex = 0; bitIndex < BYTE_SIZE; bitIndex++) {
-        const byte globalBitIndex = i * BYTE_SIZE + bitIndex;
-        const int pin = globalBitIndex / PCB::numMultiplexors;
-        const int multiplexorIdx = globalBitIndex % PCB::numMultiplexors;
-        const char key = PCB::leftMultiplexorPin2Char[pin][multiplexorIdx];
-        if (key == KEY_EMPTY) {
-          continue;
-        }
-        const bool keyPressed = bitRead(dataByte, bitIndex);
-    //      setKeyByCondition(key, keyPressed);
-        if (keyPressed) {
-          Serial.println(String(key) + " pressed!");
-        }
-      }
-    }
-  }
+  processLeftKeyboard();
 
   // LED
   LED5.write(colors, 3);

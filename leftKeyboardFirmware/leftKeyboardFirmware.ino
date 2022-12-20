@@ -39,11 +39,6 @@ void loop() {
       if (key == KEY_EMPTY) {
         continue;
       }
-      
-      // don't do anything with function keys for now
-      if (key == KEY_FN) {
-        continue;
-      }
 
       // check if key is pressed
       const int unpressedValue = config::leftKeysThresholds[pin][i][0];
