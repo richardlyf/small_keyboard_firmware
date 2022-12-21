@@ -59,7 +59,7 @@ namespace PCB {
         {'.',             '=',                'y'},
         {'l',             KEY_F10,            KEY_F8},
         {';',             KEY_F11,            KEY_F7},
-        {'"',             KEY_F12,            '7'},
+        {'\'',            KEY_F12,            '7'},
         {KEY_END,         KEY_DELETE,         'u'},
         {'\\',            KEY_INSERT,         '8'},
         {KEY_RETURN,      KEY_PRINT_SCREEN,   KEY_F9},

@@ -18,6 +18,8 @@ class SmallKeyboard {
     // sends the key release signal to computer, maintaining key state
     void release(String side, byte pin, byte multiplexorIdx);
 
+    friend class LED;
+
   private:
     // only print to serial if true
     bool _debug{true};

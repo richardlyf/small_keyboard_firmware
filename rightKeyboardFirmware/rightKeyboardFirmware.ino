@@ -1,20 +1,18 @@
-// #include <Keyboard.h>
-#include <PololuLedStrip.h>
 #include <Wire.h>
 
 #include "config.h"
+#include "keyboardLED.hpp"
 #include "smallKeyboard.hpp"
 #include "utils.h"
 
-PololuLedStrip<11> LED0;
-PololuLedStrip<10> LED1;
-PololuLedStrip<9> LED2;
-PololuLedStrip<6> LED3;
-PololuLedStrip<5> LED4;
-PololuLedStrip<13> LED5;
+// normal function, debug to serial only, killed and do nothing
+// killed state may be necessary to upload new script
+enum State {NORMAL, DEBUG, PAUSE, KILLED};
 
+State state;
 // Keyboard wrapper that maintains state
 SmallKeyboard smallKeyboard;
+LED led(smallKeyboard);
 
 void setup() {
   for (byte i = 0; i < PCB::numSelectorPins; i++) {
@@ -29,6 +27,7 @@ void setup() {
   digitalWrite(SCL, LOW);
   // Serial must begin after Wire, or neither works
   Serial.begin(9600);
+  state = DEBUG;
 }
 
 void setKeyByCondition(String side, byte pin, byte multiplexorIdx, bool pressed) {
@@ -90,12 +89,22 @@ void processLeftKeyboard() {
         continue;
       }
       const bool keyPressed = bitRead(dataByte, bitIndex);
-      if (key == MACRO_0) {
-        if (keyPressed){
-          smallKeyboard.setDebug(false);
+
+      // check macro for state change
+      if (key == MACRO_0 && keyPressed){
+        state = NORMAL;
+      } else if (key == MACRO_1 && keyPressed){
+        state = DEBUG;
+      } else if (key == MACRO_2) {
+        if (keyPressed) {
+          led.setTrigger(true);
+          led.sendSignalToLeft(true);
         } else {
-          smallKeyboard.setDebug(true);
+          led.setTrigger(false);
+          led.sendSignalToLeft(false);
         }
+      } else if (key == KEY_FN && keyPressed){
+        state = KILLED;
       }
       setKeyByCondition("left", pin, multiplexorIdx, keyPressed);
     }
@@ -103,16 +112,24 @@ void processLeftKeyboard() {
 }
 
 void loop() {
-  rgb_color colors[3];
-  for(int i = 0; i < 3; i++) {
-    colors[i] = {0,0,0};
+  switch (state) {
+    case PAUSE:
+      led.setTrigger(true);
+      led.sendSignalToLeft(true);
+      // fall through to debug
+    case DEBUG:
+      smallKeyboard.setDebug(true);
+      break;
+    case NORMAL:
+      smallKeyboard.setDebug(false);
+      break;
+    case KILLED:
+      return;
   }
-
-  // process right side of keyboard
   processRightKeyboard();
-  // process left side of keyboard
   processLeftKeyboard();
 
   // LED
-  LED5.write(colors, 3);
+  led.update("right");
+  led.flushToLED("right");
 }

@@ -1,15 +1,19 @@
 #include <Wire.h>
-#include <Keyboard.h>
 
 #include "config.h"
+#include "keyboardLED.hpp"
 
 byte keyPressArray[PCB::i2cByteArraySize];
+// even tho right keyboard does all the processing, we create a keyboard object
+// for the left keyboard just so it could reduce compute load of the right side
+// and keep track of left keyboard state separately
+ SmallKeyboard smallKeyboard;
+LED led(smallKeyboard);
 
 void setup() {
   for (byte i = 0; i < PCB::numSelectorPins; i++) {
     pinMode(PCB::multiplexorSelectorPins[i], OUTPUT);
   }
-  // Keyboard.begin();
 
   // left keyboard is the slave
   Wire.begin(SLAVE_ADDR);
@@ -18,13 +22,30 @@ void setup() {
   digitalWrite(SDA, LOW);
   digitalWrite(SCL, LOW);
   Wire.onRequest(sendAllKeyPressViaI2C);
+  Wire.onReceive(updateLED);
   // Serial must begin after Wire, or neither works
   Serial.begin(9600);
+  smallKeyboard.setDebug(true);
 }
 
 void sendAllKeyPressViaI2C() {
   Wire.write(0);
   Wire.write(keyPressArray, PCB::i2cByteArraySize);
+}
+
+void updateLED(int bytesRead) {
+  if (Wire.available()) {
+    bool state = Wire.read();
+    led.setTrigger(state);
+  }
+}
+
+void setKeyByCondition(String side, byte pin, byte multiplexorIdx, bool pressed) {
+  if (pressed) {
+    smallKeyboard.press(side, pin, multiplexorIdx);
+  } else {
+    smallKeyboard.release(side, pin, multiplexorIdx);
+  }
 }
 
 void loop() {  
@@ -50,9 +71,7 @@ void loop() {
       }
       const int keyThreshold = unpressedValue + keyPressRange * KEY_THRESHOLD_PERCENTAGE;
       const bool keyPressed = ((keyPressRange > 0 && keyValue > keyThreshold) || (keyPressRange < 0 && keyValue < keyThreshold));
-      if (keyPressed) {
-        Serial.println(String(key) + " pressed!");
-      }
+      setKeyByCondition("left", pin, i, keyPressed);
       // write key press result to key press array
       const byte globalBitIndex = pin * PCB::numMultiplexors + i;
       const int byteArrayIndex = globalBitIndex / BYTE_SIZE;
@@ -60,4 +79,7 @@ void loop() {
       bitWrite(keyPressArray[byteArrayIndex], bitIndex, keyPressed);
     }
   }
+
+  led.update("left");
+  led.flushToLED("left");
 }
