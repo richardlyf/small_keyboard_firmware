@@ -7,8 +7,8 @@ byte keyPressArray[PCB::i2cByteArraySize];
 // even tho right keyboard does all the processing, we create a keyboard object
 // for the left keyboard just so it could reduce compute load of the right side
 // and keep track of left keyboard state separately
- SmallKeyboard smallKeyboard;
-LED led(smallKeyboard);
+SmallKeyboard smallKeyboard;
+LED<LeftLED> led(smallKeyboard);
 
 void setup() {
   for (byte i = 0; i < PCB::numSelectorPins; i++) {
@@ -35,8 +35,8 @@ void sendAllKeyPressViaI2C() {
 
 void updateLED(int bytesRead) {
   if (Wire.available()) {
-    bool state = Wire.read();
-    led.setTrigger(state);
+    byte state = Wire.read();
+    led.setState(state);
   }
 }
 
@@ -80,6 +80,7 @@ void loop() {
     }
   }
 
-  led.update("left");
-  led.flushToLED("left");
+  led.update();
+  led.renderMacros();
+  led.flushToLED();
 }

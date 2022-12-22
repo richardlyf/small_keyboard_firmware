@@ -3,14 +3,8 @@
 
 #include "utils.h"
 
-// |initialValue                       |      pressedValue|
-// |--------------  0.6 ---------------|------------------|
-#define KEY_THRESHOLD_PERCENTAGE 0.6
-// maximum noise if key is not pressed
-#define MAX_KEY_NOISE 5
-
-// User defined macros
-// #define UNUSED_MACROS {MACRO_2, MACRO_3, MACRO_4}
+// limit on max number of key presses before keyboard shuts down
+#define MAX_KEY_LIMIT 500
 
 namespace config {
   // auto-generated from calibration script

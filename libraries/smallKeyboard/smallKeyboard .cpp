@@ -146,19 +146,30 @@ void SmallKeyboard::processKey(String side, String action, byte pin, byte multip
             String keyStr = keySignalToChar(key);
             keyStr = keyStr != "" ? keyStr : String(char(key));
             Serial.println(keyStr + " " + action + "!");
-        } else {
-            if (isMacro(key)) {
-                return;
-            }
+        } else if (!isMacro(key)) {
             if (key == KEY_LEFT_SPACE || key == KEY_RIGHT_SPACE) {
                 key = ' ';
             }
             (Keyboard.*actionFn)(key);
         }
+        // increment key press on release regardless of whether if it went through
+        if (!ignoreActionCondition) {
+            _numKeyPress++;
+        }
         keyState[arrayIdx] = ignoreActionCondition;
     }
 }
 
+bool SmallKeyboard::isKeyPressed(String side, byte pin, byte multiplexorIdx) {
+    bool* keyState;
+    if (side == "left") {
+        keyState = &_leftKeyState[0][0];
+    } else if (side == "right") {
+        keyState = &_rightKeyState[0][0];
+    }
+    int arrayIdx = pin * PCB::numMultiplexors + multiplexorIdx;
+    return keyState[arrayIdx];
+}
 
 void SmallKeyboard::press(String side, byte pin, byte multiplexorIdx) {
     processKey(side, "press", pin, multiplexorIdx);

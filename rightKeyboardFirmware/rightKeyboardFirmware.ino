@@ -5,14 +5,10 @@
 #include "smallKeyboard.hpp"
 #include "utils.h"
 
-// normal function, debug to serial only, killed and do nothing
-// killed state may be necessary to upload new script
-enum State {NORMAL, DEBUG, PAUSE, KILLED};
-
 State state;
 // Keyboard wrapper that maintains state
 SmallKeyboard smallKeyboard;
-LED led(smallKeyboard);
+LED<RightLED> led(smallKeyboard);
 
 void setup() {
   for (byte i = 0; i < PCB::numSelectorPins; i++) {
@@ -89,33 +85,43 @@ void processLeftKeyboard() {
         continue;
       }
       const bool keyPressed = bitRead(dataByte, bitIndex);
-
-      // check macro for state change
-      if (key == MACRO_0 && keyPressed){
-        state = NORMAL;
-      } else if (key == MACRO_1 && keyPressed){
-        state = DEBUG;
-      } else if (key == MACRO_2) {
-        if (keyPressed) {
-          led.setTrigger(true);
-          led.sendSignalToLeft(true);
-        } else {
-          led.setTrigger(false);
-          led.sendSignalToLeft(false);
-        }
-      } else if (key == KEY_FN && keyPressed){
-        state = KILLED;
-      }
       setKeyByCondition("left", pin, multiplexorIdx, keyPressed);
     }
   }
 }
 
+void checkStateTransition() {
+  // check macro for state change
+  // Macro 0 starts the keyboard as normal
+  if (smallKeyboard.isKeyPressed("left", 6, 0)){
+    state = NORMAL;
+    led.setState(NORMAL);
+    led.sendSignalToLeft(NORMAL);
+  }
+  // Macro 1 enters debug mode
+  else if (smallKeyboard.isKeyPressed("left", 5, 0)){
+    state = DEBUG;
+    led.setState(NORMAL);
+    led.sendSignalToLeft(NORMAL);
+  }
+  // Macro 2 & 3 kills the keyboard
+  else if (smallKeyboard.isKeyPressed("left", 4, 0) && smallKeyboard.isKeyPressed("left", 3, 0)) {
+    state = KILLED;
+    led.setState(KILLED);
+    led.sendSignalToLeft(KILLED);
+  }
+  // check key press limits
+  if (smallKeyboard.numKeyPress() > MAX_KEY_LIMIT) {
+    state = PAUSED;
+    led.setState(PAUSED);
+    led.sendSignalToLeft(PAUSED);
+    smallKeyboard.resetKeyPress();
+  }
+}
+
 void loop() {
   switch (state) {
-    case PAUSE:
-      led.setTrigger(true);
-      led.sendSignalToLeft(true);
+    case PAUSED:
       // fall through to debug
     case DEBUG:
       smallKeyboard.setDebug(true);
@@ -128,8 +134,9 @@ void loop() {
   }
   processRightKeyboard();
   processLeftKeyboard();
+  checkStateTransition();
 
   // LED
-  led.update("right");
-  led.flushToLED("right");
+  led.update();
+  led.flushToLED();
 }

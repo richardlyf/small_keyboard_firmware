@@ -20,6 +20,17 @@
 #define KEY_LEFT_SPACE 'l '
 #define KEY_RIGHT_SPACE 'r '
 
+// key press constants
+// |initialValue                       |      pressedValue|
+// |--------------  0.6 ---------------|------------------|
+#define KEY_THRESHOLD_PERCENTAGE 0.6
+// maximum noise if key is not pressed
+#define MAX_KEY_NOISE 5
+
+// normal function, debug to serial only, killed and do nothing
+// killed state may be necessary to upload new script
+enum State {NORMAL, DEBUG, PAUSED, KILLED};
+
 namespace PCB {
     const int numMultiplexors = 3;
     const int multiplexorId2DataPin[numMultiplexors] = {A1, A0, A2};
