@@ -13,10 +13,10 @@ class SmallKeyboard {
     void setDebug(bool state) { _debug = state; }
 
     // returns true if key is pressed
-    bool isKeyPressed(String side, byte pin, byte multiplexorIdx);
+    bool isKeyPressed(String side, byte pin, byte multiplexorIdx) const;
 
     // returns the number of key presses
-    uint16_t numKeyPress() { return _numKeyPress; }
+    uint16_t numKeyPress() const { return _numKeyPress; }
     void resetKeyPress() { _numKeyPress = 0; }
 
     // sends the key press signal to computer, maintaining key state
@@ -37,6 +37,8 @@ class SmallKeyboard {
 
     // helper to process a key press or key release
     void processKey(String side, String action, byte pin, byte multiplexorIdx);
+    // release all keys that are currently pressed
+    void releaseAllPressedKeys();
     // check if this key is macro and cannot be sent to computer directly
     bool isMacro(int key);
 };

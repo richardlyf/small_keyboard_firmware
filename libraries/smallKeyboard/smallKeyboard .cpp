@@ -109,6 +109,27 @@ bool SmallKeyboard::isMacro(int key) {
     return false;
 }
 
+void SmallKeyboard::releaseAllPressedKeys() {
+    for (byte pin = 0; pin < PCB::numMultiplexorReadPins; pin++) {
+        for (byte i = 0; i < PCB::numMultiplexors; i++) {
+            if (_leftKeyState[pin][i]) {
+                int key = PCB::leftMultiplexorPin2Char[pin][i];
+                if (key == KEY_LEFT_SPACE) {
+                    key = ' ';
+                }
+                Keyboard.release(key);
+            }
+            if (_rightKeyState[pin][i]) {
+                int key = PCB::rightMultiplexorPin2Char[pin][i];
+                if (key == KEY_RIGHT_SPACE) {
+                    key = ' ';
+                }
+                Keyboard.release(key);
+            }
+        }
+    }
+}
+
 void SmallKeyboard::processKey(String side, String action, byte pin, byte multiplexorIdx) {
     // create variables that either reference the left or right side of the keyboard
     // unfortunately this is the easiest way to reference an array without creating a class
@@ -151,16 +172,21 @@ void SmallKeyboard::processKey(String side, String action, byte pin, byte multip
                 key = ' ';
             }
             (Keyboard.*actionFn)(key);
-        }
-        // increment key press on release regardless of whether if it went through
-        if (!ignoreActionCondition) {
-            _numKeyPress++;
+
+            // increment keystroke limit counter on release
+            if (action == "release") {
+                _numKeyPress++;
+                // release all other pressed keys before keyboard shuts off
+                if (_numKeyPress > MAX_KEY_LIMIT) {
+                    releaseAllPressedKeys();
+                }
+            }
         }
         keyState[arrayIdx] = ignoreActionCondition;
     }
 }
 
-bool SmallKeyboard::isKeyPressed(String side, byte pin, byte multiplexorIdx) {
+bool SmallKeyboard::isKeyPressed(String side, byte pin, byte multiplexorIdx) const {
     bool* keyState;
     if (side == "left") {
         keyState = &_leftKeyState[0][0];
