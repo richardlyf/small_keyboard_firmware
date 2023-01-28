@@ -114,16 +114,12 @@ void SmallKeyboard::releaseAllPressedKeys() {
         for (byte i = 0; i < PCB::numMultiplexors; i++) {
             if (_leftKeyState[pin][i]) {
                 int key = PCB::leftMultiplexorPin2Char[pin][i];
-                if (key == KEY_LEFT_SPACE) {
-                    key = ' ';
-                }
+                key = remapKeys(key);
                 Keyboard.release(key);
             }
             if (_rightKeyState[pin][i]) {
                 int key = PCB::rightMultiplexorPin2Char[pin][i];
-                if (key == KEY_RIGHT_SPACE) {
-                    key = ' ';
-                }
+                key = remapKeys(key);
                 Keyboard.release(key);
             }
         }
@@ -168,9 +164,7 @@ void SmallKeyboard::processKey(String side, String action, byte pin, byte multip
             keyStr = keyStr != "" ? keyStr : String(char(key));
             Serial.println(keyStr + " " + action + "!");
         } else if (!isMacro(key)) {
-            if (key == KEY_LEFT_SPACE || key == KEY_RIGHT_SPACE) {
-                key = ' ';
-            }
+            key = remapKeys(key);
             (Keyboard.*actionFn)(key);
 
             // increment keystroke limit counter on release

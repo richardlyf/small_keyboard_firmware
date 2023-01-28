@@ -41,6 +41,20 @@ class SmallKeyboard {
     void releaseAllPressedKeys();
     // check if this key is macro and cannot be sent to computer directly
     bool isMacro(int key);
+
+    // remap any keys
+    int remapKeys(int key) {
+        switch (key) {
+          case KEY_LEFT_SPACE:
+          case KEY_RIGHT_SPACE:
+              return ' ';
+          // TODO: add your own remapped keys here
+          case KEY_CAPS_LOCK:
+              return KEY_LEFT_CTRL;
+          default:
+              return key;
+        }
+    }
 };
 
 #endif // _SMALL_KEYBOARD_HPP
