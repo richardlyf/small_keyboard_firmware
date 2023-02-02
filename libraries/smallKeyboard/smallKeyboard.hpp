@@ -17,6 +17,7 @@ class SmallKeyboard {
 
     // returns the number of key presses
     uint16_t numKeyPress() const { return _numKeyPress; }
+    void setKeyPress(uint16_t num) { _numKeyPress = num; }
     void resetKeyPress() { _numKeyPress = 0; }
 
     // sends the key press signal to computer, maintaining key state
@@ -30,7 +31,7 @@ class SmallKeyboard {
 
   private:
     // only print to serial if true
-    bool _debug{true};
+    bool _debug{false};
     bool _leftKeyState[PCB::numMultiplexorReadPins][PCB::numMultiplexors];
     bool _rightKeyState[PCB::numMultiplexorReadPins][PCB::numMultiplexors];
     uint16_t _numKeyPress{0};

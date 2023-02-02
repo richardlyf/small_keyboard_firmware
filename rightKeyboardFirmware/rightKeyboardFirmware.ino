@@ -1,3 +1,4 @@
+#include <EEPROM.h>
 #include <Wire.h>
 
 #include "config.h"
@@ -23,7 +24,11 @@ void setup() {
   digitalWrite(SCL, LOW);
   // Serial must begin after Wire, or neither works
   Serial.begin(9600);
-  state = DEBUG;
+  state = NORMAL;
+  // get key limit from EEPROM
+  uint16_t lastRecordedKeyPress;
+  EEPROM.get(0, lastRecordedKeyPress);
+  smallKeyboard.setKeyPress(lastRecordedKeyPress);
 }
 
 void setKeyByCondition(String side, byte pin, byte multiplexorIdx, bool pressed) {
@@ -97,6 +102,8 @@ void checkStateTransition() {
     state = NORMAL;
     led.setState(NORMAL);
     led.sendSignalToLeft(NORMAL);
+    smallKeyboard.resetKeyPress();
+    EEPROM.put(0, smallKeyboard.numKeyPress());
   }
   // Macro 1 enters debug mode
   else if (smallKeyboard.isKeyPressed("left", 5, 0)){
@@ -115,7 +122,6 @@ void checkStateTransition() {
     state = PAUSED;
     led.setState(PAUSED);
     led.sendSignalToLeft(PAUSED);
-    smallKeyboard.resetKeyPress();
   }
 }
 
@@ -134,6 +140,7 @@ void loop() {
   }
   processRightKeyboard();
   processLeftKeyboard();
+  EEPROM.put(0, smallKeyboard.numKeyPress());
   checkStateTransition();
 
   // LED

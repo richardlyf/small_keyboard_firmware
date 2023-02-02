@@ -114,8 +114,13 @@ class LED {
         const SmallKeyboard& _keyboard;
         BaseLED _led;
         State _ledState = NORMAL;
+        const byte _FkeyLocations[12][2] = {
+            {9, 0}, {7, 1} , {5, 1}, {4, 1}, {7, 2}, {8, 2}, {6, 2}, {5, 2}, {10, 2}, {5, 1}, {6, 1}, {7, 1}
+        };
 
-        void greenWhenPressed();
+        // render progress bar toward key limit on the F keys
+        void renderKeyLimitProgress();
+        void lightWhenPressed();
         void setAllToColor(const rgb_color& color);
 };
 
@@ -155,8 +160,24 @@ void LED<BaseLED>::setAllToColor(const rgb_color& color) {
     }
 }
 
+template<>
+void LED<LeftLED>::renderKeyLimitProgress() {
+    // cross keyboard progress bar requires i2c communication so only right side for now
+}
+
+template<>
+void LED<RightLED>::renderKeyLimitProgress() {
+    const byte startFIdx = 6;
+    const byte endFIdx = 12;
+    const byte progressBarLength = 6;
+    const int upperBoundIdx = _keyboard.numKeyPress() * progressBarLength / MAX_KEY_LIMIT;
+    for (byte i = startFIdx; i < min(endFIdx, startFIdx + upperBoundIdx); i++) {
+        writeLED(_FkeyLocations[i][0], _FkeyLocations[i][1], {0, 64, 0});
+    }
+}
+
 template<typename BaseLED>
-void LED<BaseLED>::greenWhenPressed() {
+void LED<BaseLED>::lightWhenPressed() {
     // light up pressed keys green
     bool* keyState = getKeyStateArray();
     for (byte pin = 0; pin < PCB::numMultiplexorReadPins; pin++) {
@@ -167,7 +188,7 @@ void LED<BaseLED>::greenWhenPressed() {
                 continue;
             }
             if (keyState[arrayIdx]) {
-                writeLED(pin, multiplexorIdx, {0, 128, 0});
+                writeLED(pin, multiplexorIdx, {0, 0, 128});
             } else {
                 writeLED(pin, multiplexorIdx, {0, 0, 0});
             }
@@ -185,7 +206,8 @@ void LED<BaseLED>::update() {
             setAllToColor({0, 0, 0});
             return;
         default:
-            greenWhenPressed();
+            lightWhenPressed();
+            renderKeyLimitProgress();
     }
 }
 

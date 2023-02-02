@@ -4,7 +4,7 @@
 #include "utils.h"
 
 // limit on max number of key presses before keyboard shuts down
-#define MAX_KEY_LIMIT 500
+#define MAX_KEY_LIMIT 1000
 
 namespace config {
   // auto-generated from calibration script
