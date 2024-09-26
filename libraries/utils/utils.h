@@ -42,6 +42,8 @@ namespace PCB {
     const int i2cByteArraySize = (numMultiplexorReadPins * numMultiplexors + BYTE_SIZE - 1) / BYTE_SIZE;
 
     // left keyboard setup
+    // qwerty
+    /*
     const int leftMultiplexorPin2Char[numMultiplexorReadPins][numMultiplexors] = {
         {KEY_LEFT_CTRL,     KEY_LEFT_ALT,       KEY_EMPTY},
         {KEY_FN,            'x',                'c'},
@@ -60,8 +62,30 @@ namespace PCB {
         {KEY_EMPTY,         's',                KEY_LEFT_SPACE},
         {KEY_CAPS_LOCK,     'a',                'b'}
     };
+    */
+
+    const int leftMultiplexorPin2Char[numMultiplexorReadPins][numMultiplexors] = {
+        {KEY_LEFT_CTRL,     KEY_LEFT_ALT,       KEY_EMPTY},
+        {KEY_FN,            'x',                'c'},
+        {MACRO_4,           KEY_EMPTY,          't'},
+        {MACRO_3,           KEY_EMPTY,          'p'},
+        {MACRO_2,           KEY_F4,             'b'},
+        {MACRO_1,           KEY_F3,             '4'},
+        {MACRO_0,           '2',                '5'},
+        {KEY_ESC,           KEY_F2,             KEY_F5},
+        {'1',               'q',                KEY_F6},
+        {KEY_F1,            '3',                '6'},
+        {'`',               'w',                KEY_EMPTY},
+        {KEY_TAB,           'f',                KEY_EMPTY},
+        {KEY_LEFT_GUI,      's',                'g'},
+        {KEY_LEFT_SHIFT,    'z',                'd'},
+        {KEY_EMPTY,         'r',                KEY_LEFT_SPACE},
+        {KEY_CAPS_LOCK,     'a',                'v'}
+    };
 
     // right keyboard setup
+    // qwerty
+    /*
     const int rightMultiplexorPin2Char[numMultiplexorReadPins][numMultiplexors] = {
         {KEY_LEFT_ARROW,  'o',                KEY_RIGHT_SPACE},
         {KEY_RIGHT_SHIFT, 'i',                'n'},
@@ -76,10 +100,30 @@ namespace PCB {
         {KEY_RETURN,      KEY_PRINT_SCREEN,   KEY_F9},
         {KEY_PAGE_UP,     KEY_BACKSPACE,      '9'},
         {KEY_PAGE_DOWN,   KEY_HOME,           'k'},
-        {KEY_UP_ARROW,    'p',                'j'},
+        {KEY_UP_ARROW,    'r',                'j'},
         {KEY_RIGHT_ARROW, '[',                ','},
         {KEY_DOWN_ARROW,  ']',                'h'}
     };
+*/
+    const int rightMultiplexorPin2Char[numMultiplexorReadPins][numMultiplexors] = {
+        {KEY_LEFT_ARROW,  'y',                KEY_RIGHT_SPACE},
+        {KEY_RIGHT_SHIFT, 'u',                'k'},
+        {KEY_RIGHT_CTRL,  '0',                'h'},
+        {'/',             '-',                KEY_RIGHT_ALT},
+        {'.',             '=',                'j'},
+        {'i',             KEY_F10,            KEY_F8},
+        {'o',             KEY_F11,            KEY_F7},
+        {'\'',            KEY_F12,            '7'},
+        {KEY_END,         KEY_DELETE,         'l'},
+        {'\\',            KEY_INSERT,         '8'},
+        {KEY_RETURN,      KEY_PRINT_SCREEN,   KEY_F9},
+        {KEY_PAGE_UP,     KEY_BACKSPACE,      '9'},
+        {KEY_PAGE_DOWN,   KEY_HOME,           'e'},
+        {KEY_UP_ARROW,    ';',                'n'},
+        {KEY_RIGHT_ARROW, '[',                ','},
+        {KEY_DOWN_ARROW,  ']',                'm'}
+    };
+
 }
 
 // helper functions
